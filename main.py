@@ -25,6 +25,17 @@ st.title("(P)ython (S)ourcing utility by (G)abe")
 st.markdown("*PSG for short*")
 
 if st.session_state.step == 0:
+    # Check if user is already authenticated
+    if st.user.is_logged_in:
+        # User is authenticated, move to next step
+        print(st.user.get("email"))
+        st.session_state.step = 1
+        st.rerun()
+    else:
+        # Show login button
+        if st.button("Login With Work Account"):
+            st.login()
+
 
 # upload file
 elif st.session_state.step == 1:
