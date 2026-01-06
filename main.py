@@ -7,6 +7,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
+
 ## Setup states
 #
 # Current table
@@ -17,13 +18,16 @@ if "table" not in st.session_state:
 if "step" not in st.session_state:
     st.session_state.step = 0  # 0: initial state, 1: has been through rocket reach, 2: ready to send to hubspot
 
+st.set_page_config(page_title="Hubspot Bulk Upload", page_icon="📤", layout="wide")
+
 # show title
 st.title("(P)ython (S)ourcing utility by (G)abe")
 st.markdown("*PSG for short*")
 
+if st.session_state.step == 0:
 
 # upload file
-if st.session_state.step == 0:
+elif st.session_state.step == 1:
     st.header("Step 1: Import from Linkedin Recruiter")
     st.subheader("*Hint you can edit any of this data in the grid below")
     file = st.file_uploader("Upload Linkedin CSV Export", type="csv")
@@ -52,7 +56,7 @@ if st.session_state.step == 0:
             st.rerun()
 
 
-elif st.session_state.step == 1:
+elif st.session_state.step == 2:
     # header and subheader
     st.header("Step 2: Create contacts in HubSpot")
     st.subheader("hint you can edit any of this data")
@@ -77,7 +81,7 @@ elif st.session_state.step == 1:
         st.session_state.step += 1
         st.rerun()
 
-elif st.session_state.step == 2:
+elif st.session_state.step == 3:
     st.header("Step 3: Create Candidate trackers")
     st.subheader("Found or Created contacts in HubSpot")
     st.write("'✅' means they were already in hubspot '❌' means they were created")
@@ -135,6 +139,6 @@ elif st.session_state.step == 2:
             st.session_state.step += 1
             st.rerun()
 
-elif st.session_state.step == 3:
+elif st.session_state.step == 4:
     st.success("Trackers Created! ", icon="🎇", width="stretch")
     st.data_editor(st.session_state.table, width="content")
