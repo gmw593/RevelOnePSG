@@ -86,7 +86,7 @@ elif st.session_state.step == 2:
 
     # Get active searches
     searches = requests.post(
-        url=f"{os.getenv('hubspotURL')}",
+        url="https://api.hubapi.com/crm/v3/objects/2-30586852/search",
         headers={
             "Authorization": os.getenv("hubspotPat"),
             "Content-Type": "application/json",
