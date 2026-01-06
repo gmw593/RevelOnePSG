@@ -28,7 +28,6 @@ if st.session_state.step == 0:
     # Check if user is already authenticated
     if st.user.is_logged_in:
         # User is authenticated, move to next step
-        print(st.user.get("email"))
         st.session_state.step = 1
         st.rerun()
     else:
