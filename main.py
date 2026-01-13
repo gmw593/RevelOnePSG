@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+#when running locally use this command: streamlit run main.py --server.port 8502
+
 ## Setup states
 #
 # Current table
@@ -38,6 +40,7 @@ if st.session_state.step == 0:
 
 # upload file
 elif st.session_state.step == 1:
+    print(st.user.email)
     st.header("Step 1: Import from Linkedin Recruiter")
     st.subheader("*Hint you can edit any of this data in the grid below")
     file = st.file_uploader("Upload Linkedin CSV Export", type="csv")
@@ -65,7 +68,7 @@ elif st.session_state.step == 1:
             st.session_state.step += 1
             st.rerun()
 
-
+#create contacts
 elif st.session_state.step == 2:
     # header and subheader
     st.header("Step 2: Create contacts in HubSpot")
@@ -82,7 +85,10 @@ elif st.session_state.step == 2:
         data2 = st.session_state.table.to_json(orient="records")
         hubspotData = requests.post(
             "https://revelone.app.n8n.cloud/webhook/9ddc6dd0-d758-4b17-8ff0-efe8988e577f",
-            json=data2,
+            json={
+                "user": st.user.email,
+                "contacts": data2,
+            },
             headers={"Content-Type": "application/json"},
         )  ## this is the devolpment url remember to switch to prod
 
@@ -94,7 +100,7 @@ elif st.session_state.step == 2:
 elif st.session_state.step == 3:
     st.header("Step 3: Create Candidate trackers")
     st.subheader("Found or Created contacts in HubSpot")
-    st.write("'✅' means they were already in hubspot '❌' means they were created")
+    st.write("'🔍 ' means they were already in hubspot '✅' means they were created")
     # show current table
     st.data_editor(st.session_state.table, width="content")
 
