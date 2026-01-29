@@ -1,0 +1,341 @@
+{
+  "name": "Bulk-1 Send to rocketreach",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d038ef22-7924-4b5c-a7bd-d5bc2bacd5f0",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "44da86fd-4525-41fd-bc8e-3d6ffa6c5213",
+      "name": "Webhook",
+      "webhookId": "d038ef22-7924-4b5c-a7bd-d5bc2bacd5f0"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "candidates",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ],
+      "id": "b5b675f1-6aa4-4990-ac19-b638ff60d11c",
+      "name": "Extract Body"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "83d509ae-aa0c-498d-a67c-8ba051cb5329",
+              "name": "candidates",
+              "value": "={{ JSON.parse($json.body) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        0
+      ],
+      "id": "cd74ee08-8b2e-4c83-8934-1063f2b7b030",
+      "name": "Turn to body"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "65f7738a-a9b5-439b-9d47-5c0738e13a69",
+              "name": "First Name",
+              "value": "={{ $('Extract Body').item.json['First Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "bfd47ddb-79e4-486c-a3de-9cc7e2642fc1",
+              "name": "Last Name",
+              "value": "={{ $('Extract Body').item.json['Last Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0ffa8972-ac31-4be6-a86d-1d7609d11a26",
+              "name": "Headline",
+              "value": "={{ $('Extract Body').item.json.Headline }}",
+              "type": "string"
+            },
+            {
+              "id": "8a008e0d-ba28-400e-9c74-dcdb05bc944f",
+              "name": "Location",
+              "value": "={{ $('Extract Body').item.json.Location }}",
+              "type": "string"
+            },
+            {
+              "id": "82c09c6d-a2bb-4623-b020-a9c510c8ff5d",
+              "name": "Current Title",
+              "value": "={{ $('Extract Body').item.json['Current Title'] }}",
+              "type": "string"
+            },
+            {
+              "id": "5afac7e5-1b1a-4783-9d5d-37874d6f96e5",
+              "name": "Current Company",
+              "value": "={{ $('Extract Body').item.json['Current Company'] }}",
+              "type": "string"
+            },
+            {
+              "id": "7f5db54a-1182-4120-b104-48437bcc3593",
+              "name": "Profile URL",
+              "value": "={{ $('Extract Body').item.json['Profile URL'] }}",
+              "type": "string"
+            },
+            {
+              "id": "bdd35b2f-b1e6-4fa1-8f51-da41ec606339",
+              "name": "Active Project",
+              "value": "={{ $('Extract Body').item.json['Active Project'] }}",
+              "type": "string"
+            },
+            {
+              "id": "3cb5501b-8090-46f8-813a-92f407c5c9da",
+              "name": "recommended_personal_email",
+              "value": "={{ $json.recommended_personal_email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        0
+      ],
+      "id": "ec42b963-4b65-4006-836e-f11463ca422f",
+      "name": "Add email to person list"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "a426095c-d24a-4396-9e48-65088843bf41",
+      "name": "Combine JSONS"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1360,
+        0
+      ],
+      "id": "97c6b6f5-e2e8-4100-9884-3219463778c5",
+      "name": "Send back to dashboard"
+    },
+    {
+      "parameters": {
+        "content": "# 1. Get and transform Data\n- Get export from web app\n- Convert to readable json rows\n- Make list",
+        "height": 352,
+        "width": 512,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        160,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "9d6ad8a8-b46f-42cc-a947-c907b72f0c6e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://api.rocketreach.co/api/v2/person/lookup",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "linkedin_url",
+              "value": "={{ $json['Profile URL'] }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 0
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        752,
+        0
+      ],
+      "id": "1c93cb8e-de45-47e1-b7cc-5e20c6821a06",
+      "name": "Get Emails from RocketReach",
+      "executeOnce": false,
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "MbLWtW7qnZwEk1an",
+          "name": "RocketReach"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "# 2. Get & Add Info\n- Get personal email  \n- Add email to row",
+        "height": 352,
+        "width": 400,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        688,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "4c718575-f521-4606-8d43-fa4b19988831",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# 3. Return Data\n- Combine all rows\n- send as 1 JSON back to workflow",
+        "height": 352,
+        "width": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1104,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "f93ab948-7621-4585-8189-c5b61ee27778",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Turn to body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Body": {
+      "main": [
+        [
+          {
+            "node": "Get Emails from RocketReach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Turn to body": {
+      "main": [
+        [
+          {
+            "node": "Extract Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add email to person list": {
+      "main": [
+        [
+          {
+            "node": "Combine JSONS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine JSONS": {
+      "main": [
+        [
+          {
+            "node": "Send back to dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send back to dashboard": {
+      "main": [
+        []
+      ]
+    },
+    "Get Emails from RocketReach": {
+      "main": [
+        [
+          {
+            "node": "Add email to person list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "de854648-830e-4829-82cd-7a6da317e9d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a47ab1067daa53e5c47033af0df1b3d7e1619f4e573c9de3ef93857db021528"
+  },
+  "id": "5nPCeGgJKw575yvQ",
+  "tags": [
+    {
+      "updatedAt": "2025-12-16T20:39:39.396Z",
+      "createdAt": "2025-12-16T20:39:39.396Z",
+      "id": "itl9uKP4xLgfUHKA",
+      "name": "Bulk Ingest"
+    }
+  ]
+}

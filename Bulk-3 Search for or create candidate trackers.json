@@ -1,0 +1,742 @@
+{
+  "name": "Bulk-3 Search for or create candidate trackers",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "389f2b39-2c32-43ee-8ad7-cfc34def0980",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -544,
+        -560
+      ],
+      "id": "de2fc933-9b82-475f-890f-5f4c47553095",
+      "name": "Webhook",
+      "webhookId": "389f2b39-2c32-43ee-8ad7-cfc34def0980"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.candidates",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        128,
+        -560
+      ],
+      "id": "6922d314-c9ed-40c2-81ce-59b73b746072",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "116e035f-8941-4be2-8068-4dae4332de33",
+              "name": "body.search_id",
+              "value": "={{ $('Webhook').item.json.body.search_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0e434326-1d98-4a09-bd16-7abc18574cb0",
+              "name": "body.candidates",
+              "value": "={{ $('Webhook').item.json.body.candidates }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        -560
+      ],
+      "id": "c660a216-720b-45c7-a04f-cc9a45a63030",
+      "name": "Parse Body",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v4/objects/contacts/{{ $json.Hubspot_ID }}/associations/2-35759116",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        800,
+        -528
+      ],
+      "id": "de16db57-081b-416d-a136-a6adfea0ede4",
+      "name": "Get Trackers of contact",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "MSTWyHYOlv2E9Zg8",
+          "name": "W/Read and Write"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-35759116/batch/read",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"properties\": [\n      \"name\",\n      \"contact_first_name\",\n      \"contact_last_name\",\n      \"hs_pipeline_stage\",\n      \"search_role_id\",\n      \"search_role_name\"\n    ],\n    \"inputs\": {{$json.inputs.toJsonString()}}\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1248,
+        -528
+      ],
+      "id": "9fe0ab47-4d31-4a13-94f4-a52af30b7cd3",
+      "name": "Get tracker details",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "MSTWyHYOlv2E9Zg8",
+          "name": "W/Read and Write"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/2-30586852/{{ $json.body.search_id }}?properties=role_id,name,role_title,role_name",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -320,
+        -560
+      ],
+      "id": "c0154c2c-7bcc-4d59-a87b-376c8c2380a2",
+      "name": "Get search info",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "MSTWyHYOlv2E9Zg8",
+          "name": "W/Read and Write"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n  // Get the results array from previous node\n  const associations = $input.first().json.results || [];\n\n  // Transform to batch read format\n  const inputs = associations.map(assoc => ({\n    id: assoc.toObjectId.toString()\n  }));\n\n  // Return formatted for batch read\n  return [{\n    json: {\n      inputs: inputs,\n      trackerCount: inputs.length\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        -528
+      ],
+      "id": "ffc7205f-d837-4b8b-85e3-53394cb10c2c",
+      "name": "Create list of trackers for api call"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b371f202-147d-4a67-a6b0-0e81f2ffb6e8",
+              "name": "First",
+              "value": "={{ $json.First }}",
+              "type": "string"
+            },
+            {
+              "id": "52873c85-bda1-4818-8ca3-f926c5a3036f",
+              "name": "Last",
+              "value": "={{ $json.Last }}",
+              "type": "string"
+            },
+            {
+              "id": "fb010247-48b3-4fd4-af9f-1fed86183ab8",
+              "name": "Already in Hubspot?",
+              "value": "={{ $json['Already in Hubspot?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "81a8e8e3-4b3c-475e-9d86-142c8f4e6563",
+              "name": "URL",
+              "value": "={{ $json.URL }}",
+              "type": "string"
+            },
+            {
+              "id": "5158ea66-b69f-44d2-a88a-7fbf6ae1833e",
+              "name": "Hubspot_ID",
+              "value": "={{ $json.Hubspot_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "19f91ee0-b153-4de0-8016-f179ffe1e17b",
+              "name": "properties.role_id",
+              "value": "={{ $('Get search info').item.json.properties.role_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b81c55e3-1b10-43f2-bef1-84cc32606959",
+              "name": "Search Info",
+              "value": "={{ $('Get search info').item.json.properties }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        -560
+      ],
+      "id": "ab08f8da-8d37-443e-8704-18d83e3f3673",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "547085b3-cf1d-4af2-bc63-b423c30c6d3c",
+              "name": "results",
+              "value": "={{ $json.results }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        -528
+      ],
+      "id": "b79a6b7d-3474-42bd-8630-7ad99b91dbe7",
+      "name": "Only work on results"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/2-35759116",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"properties\": {\n      \"stage\": \"{{ $('Loop Over Candidates').item.json.First }} {{ $('Loop Over Candidates').item.json.Last }} - {{ $('Loop Over Candidates').item.json['Search Info'].role_name }} - {{ $('Loop Over Candidates').item.json.properties.role_id }}\",\n      \"contact_first_name\": \"{{ $('Loop Over Candidates').item.json.First }}\",\n      \"contact_last_name\": \"{{ $('Loop Over Candidates').item.json.Last }}\",\n      \"job_title\": \"{{ $json.properties.jobtitle.value }}\",\n      \"company_name\": \"{{ $json.properties.company.value }}\",\n      \"linkedin_url\": \"{{ $json.properties.linkedin_url__normalized_ }}\",\n      \"city\": \"{{ $json.properties.city.value }}\",\n      \"search_role_id\": \"{{ $('Loop Over Candidates').item.json['Search Info'].role_id }}\",\n      \"search_role_name\": \"{{ $('Loop Over Candidates').item.json['Search Info'].role_name }}\",\n      \"hs_pipeline_stage\": \"946862147\",\n      \"available_for_sourcing\": \"Yes ✅\",\n      \"quality_rating\": \"2. Screen for Fit\",\n      \"outreach_stage\": \"01\"\n    },\n\"associations\": [\n      {\n        \"to\": {\n          \"id\": \"{{ $('Loop Over Candidates').item.json.Hubspot_ID }}\"\n        },\n        \"types\": [\n          {\n            \"associationCategory\": \"USER_DEFINED\",\n            \"associationTypeId\": 201\n          }\n        ]\n      },\n      {\n        \"to\": {\n          \"id\": \"{{ $('Get search info').item.json.properties.hs_object_id }}\"\n        },\n        \"types\": [\n          {\n            \"associationCategory\": \"USER_DEFINED\",\n            \"associationTypeId\": 203\n          }\n        ]\n      }\n    ]\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2144,
+        -624
+      ],
+      "id": "16eae0ce-27f3-4537-8864-b1b5b021e5d9",
+      "name": "Create Candidate Tracker",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "MSTWyHYOlv2E9Zg8",
+          "name": "W/Read and Write"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "662aa77d-b7c2-424d-8867-a42c497be712",
+              "leftValue": "={{ !$json.results.map(item => item.properties.search_role_id).includes($('Loop Over Candidates').item.json.properties.role_id) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "19c41242-b5af-4163-857e-2ade8d721732",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1696,
+        -528
+      ],
+      "id": "82e9b969-42b6-4100-997e-b925233fd784",
+      "name": "If not in search"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "get",
+        "contactId": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Candidates').item.json.Hubspot_ID }}",
+          "mode": "id"
+        },
+        "additionalFields": {
+          "propertiesCollection": {
+            "propertiesValues": {
+              "properties": [
+                "jobtitle",
+                "city",
+                "linkedin_url__normalized_",
+                "company"
+              ],
+              "propertyMode": "valueOnly"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        -624
+      ],
+      "id": "08ff59d0-5c65-4a17-9bfe-806de1de31db",
+      "name": "Get a contact",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "MSTWyHYOlv2E9Zg8",
+          "name": "W/Read and Write"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        -560
+      ],
+      "id": "9fa5a7ee-9462-497e-8bec-459910fe2c01",
+      "name": "Loop Over Candidates"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        -816
+      ],
+      "id": "9c5ea140-2ec1-425d-ae0e-7dfd8506b4df",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "213e43c7-df98-4c9b-8363-13d91dbda308",
+              "name": "Tracker Name",
+              "value": "={{ $json.properties.stage }}",
+              "type": "string"
+            },
+            {
+              "id": "0ad3d699-af76-4242-9baa-d3720f1a4ad3",
+              "name": "Candidate Tracker Created or Found?",
+              "value": "Created ✅",
+              "type": "string"
+            },
+            {
+              "id": "5b7e12cf-3f51-4c13-9a32-c6f7f6de1462",
+              "name": "URL",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2368,
+        -432
+      ],
+      "id": "40697a62-8ee8-406c-9239-8d261266080d",
+      "name": "Tracker Created Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "213e43c7-df98-4c9b-8363-13d91dbda308",
+              "name": "Tracker Name",
+              "value": "={{ $json.tracker.properties.contact_first_name }} {{ $json.tracker.properties.contact_last_name }} - {{ $json.tracker.properties.search_role_name }} - {{ $json.tracker.properties.search_role_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0ad3d699-af76-4242-9baa-d3720f1a4ad3",
+              "name": "Candidate Tracker Created or Found?",
+              "value": "Found  🔍",
+              "type": "string"
+            },
+            {
+              "id": "5b7e12cf-3f51-4c13-9a32-c6f7f6de1462",
+              "name": "URL",
+              "value": "={{ $json.trackerUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2144,
+        -432
+      ],
+      "id": "91bf4b13-af15-42a7-b3d5-ae243582ce3e",
+      "name": "Tracker Found Response"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -816
+      ],
+      "id": "c496abf3-fe1a-4e03-a555-4f986ad42607",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "  // Code node: \"Find Matching Tracker\"\n  const results = $input.first().json.results || [];\n  const targetRoleId = $('Loop Over Candidates').item.json.properties.role_id;\n\n  const matchingTracker = results.find(item =>\n    item.properties.search_role_id === targetRoleId\n  );\n\n  return [{\n    json: {\n      tracker: matchingTracker,\n      trackerName: matchingTracker?.properties?.name || \"Unknown\",\n      trackerUrl: `https://app.hubspot.com/contacts/45123452/record/2-35759116/${matchingTracker?.id || \"\"}`\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        -432
+      ],
+      "id": "1c35ca10-f578-4115-b2ec-6059ff0a3f19",
+      "name": "Get existing Tracker details"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "revelone.app.n8n.cloud",
+            "user-agent": "python-requests/2.32.5",
+            "content-length": "5911",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "74.220.48.7",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b9f576b46249935-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "74.220.48.7, 104.23.160.142",
+            "x-forwarded-host": "revelone.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-52-6c4f4684d5-dnzwc",
+            "x-is-trusted": "yes",
+            "x-real-ip": "74.220.48.7"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "search_id": "43325378658",
+            "candidates": "[{\"First\":\"Avelyn\",\"Last\":\"Austin\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"175490191185\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/175490191185\"},{\"First\":\"Allyson\",\"Last\":\"Cochran\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166683969806\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166683969806\"},{\"First\":\"Lyndsay\",\"Last\":\"Radlowski\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166705904938\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166705904938\"},{\"First\":\"Peter\",\"Last\":\"Twombly\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"169872372332\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/169872372332\"},{\"First\":\"Matthew\",\"Last\":\"Lane\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"91076616973\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/91076616973\"},{\"First\":\"Courtney\",\"Last\":\"Williams\\u2728\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"163673833220\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/163673833220\"},{\"First\":\"Samantha\",\"Last\":\"Stout\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166680414611\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166680414611\"},{\"First\":\"Kimberly\",\"Last\":\"O'Connell-Calvo\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"169805490522\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/169805490522\"},{\"First\":\"Kevin\",\"Last\":\"King\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"104387216194\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/104387216194\"},{\"First\":\"Sela\",\"Last\":\"Missirian\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"175490191184\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/175490191184\"},{\"First\":\"Bill\",\"Last\":\"Hyde\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"163629762589\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/163629762589\"},{\"First\":\"Aaron\",\"Last\":\"Warshawsky\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166867103571\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166867103571\"},{\"First\":\"Ian\",\"Last\":\"Stevenson\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166828230986\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166828230986\"},{\"First\":\"Corey\",\"Last\":\"Smock\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"175536702239\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/175536702239\"},{\"First\":\"Whitney\",\"Last\":\"Wortman\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166775064892\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166775064892\"},{\"First\":\"Megan\",\"Last\":\"Owsik Lotterman\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166697941901\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166697941901\"},{\"First\":\"Jeff\",\"Last\":\"Hirz\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166639350784\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166639350784\"},{\"First\":\"Peter\",\"Last\":\"Competello\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166715843149\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166715843149\"},{\"First\":\"Mark\",\"Last\":\"Thrasher\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166675144018\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166675144018\"},{\"First\":\"Mike\",\"Last\":\"Cooney\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166637179542\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166637179542\"},{\"First\":\"Ben\",\"Last\":\"Ledyard\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"175532519466\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/175532519466\"},{\"First\":\"Mark\",\"Last\":\"Simon\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166678398642\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166678398642\"},{\"First\":\"Renee\",\"Last\":\"Lopez-Cantera, MBA\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"166688157295\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/166688157295\"},{\"First\":\"Jamie\",\"Last\":\"Elden\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"169808742320\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/169808742320\"},{\"First\":\"Bea\",\"Last\":\"Iturregui\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"175536513109\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/175536513109\"},{\"First\":\"FakePerson\",\"Last\":\"ForTesting\",\"Already in Hubspot?\":\"\\ud83d\\udd0d Contact Found\",\"Hubspot_ID\":\"186396946079\",\"URL\":\"https:\\/\\/app.hubspot.com\\/contacts\\/45123452\\/record\\/0-1\\/186396946079\"}]"
+          },
+          "webhookUrl": "https://revelone.app.n8n.cloud/webhook/389f2b39-2c32-43ee-8ad7-cfc34def0980",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Get Trackers of contact": [
+      {
+        "json": {
+          "results": []
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get search info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Body": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Trackers of contact": {
+      "main": [
+        [
+          {
+            "node": "Create list of trackers for api call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get tracker details": {
+      "main": [
+        [
+          {
+            "node": "Only work on results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get search info": {
+      "main": [
+        [
+          {
+            "node": "Parse Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create list of trackers for api call": {
+      "main": [
+        [
+          {
+            "node": "Get tracker details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only work on results": {
+      "main": [
+        [
+          {
+            "node": "If not in search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If not in search": {
+      "main": [
+        [
+          {
+            "node": "Get a contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get existing Tracker details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a contact": {
+      "main": [
+        [
+          {
+            "node": "Create Candidate Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Candidates": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Trackers of contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Candidate Tracker": {
+      "main": [
+        [
+          {
+            "node": "Tracker Created Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tracker Created Response": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tracker Found Response": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get existing Tracker details": {
+      "main": [
+        [
+          {
+            "node": "Tracker Found Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "09a2b2f2-096d-4c24-991c-00bd156c5af1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a47ab1067daa53e5c47033af0df1b3d7e1619f4e573c9de3ef93857db021528"
+  },
+  "id": "806kXhydQwargdpf",
+  "tags": [
+    {
+      "updatedAt": "2025-12-16T20:39:39.396Z",
+      "createdAt": "2025-12-16T20:39:39.396Z",
+      "id": "itl9uKP4xLgfUHKA",
+      "name": "Bulk Ingest"
+    }
+  ]
+}

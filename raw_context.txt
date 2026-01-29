@@ -1,0 +1,249 @@
+Hubspot Bulk Ingest Project
+
+Goals:
+Replace PSG’s bulk candidate tracker adding function
+Add dupe protection to candidate ingest process on contacts and candidate trackers (contacts are handled by koalify, but trackers are not)
+
+
+Usage Instructions:
+Log in with revelOne account (no password but it prevents people outside the company from writing to hubspot)
+Upload a csv export from linkedin recruiter of candidates
+Click “🚀 Enrich Emails with RocketReach” and wait for loading to finish (should take like 15 seconds)
+Review output data, this field is editable, so you can make changes to any contact details at this stage
+Click “Create Contacts in Hubspot” and wait
+Review the results of the contact creation/search
+‘🔍 Contact Found’ Means that contact was already in HubSpot and will be associated with the search during the next step
+‘✅ Candidate Created’: Means a new contact was created with info from the previous step, and will be associated with the search during the next step
+From the dropdown, select which active search you want the candidate trackers to be added to (hint you can type to search)
+Click “Add To Search: Search Name" and wait for trackers to be created
+Review, tracker names as well as links to all trackers will be returned:
+Found  🔍: Means a candidate tracker for that contact in that search already existed
+Created ✅: Means a candidate was created
+Done!
+
+
+
+Settings & Config
+
+
+Settings
+
+n8n is revelone.n8n.com
+then I have login
+
+Render backend:
+https://dashboard.render.com/web/srv-d5k0jqq4d50c73dapch0/deploys/dep-d5k0jri4d50c73dapcv0 
+
+
+
+
+The product consists of a front end coded in python and streamlit hosted on render:
+Link to github repo
+Gabe’s original: Link to app on render 
+New R1 app: https://revelonepsg-r66z.onrender.com/ 
+
+The data transformation is performed by 3 n8n workflows called by webhooks:
+Bullk - 1 Send to rocketreach 
+Bulk - 2 Search for or Create Candidate
+Bulk - 3 Search for or create candidate trackers
+
+
+Users
+Currently allowed users manage here - link to google cloud project being used, oath key link here
+We use Google Auth to control login to access the streamlit site. It allows anyone with a revel-one email
+And email auth also used to record which user/email did the work and it goes to hubspot to show who created the contact
+
+Those are for google oath, also in the TOML file
+clientID = 1064949601490-bfjoqk44779pcja8pv3894f2188b627t.apps.googleusercontent.com
+Client Secret = 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
+
+Login is handled via google OAuth, here’s the secrets file:
+XX secrets.toml XX
+When adding to render it must be placed in a dot streamlit folder
+Go to ‘Shell’ on the render page
+Run the following commands:
+
+mkdir .streamlit
+
+mv secrets.toml .streamlit/
+
+
+Workflow 1: 
+
+
+
+
+
+
+
+
+Detailed Meeting Review Notes 1/14/2025
+
+Dan/Gabe PSG Ingest Tool Handoff
+Wed, 14 Jan 26 · gweiner@revel-one.com
+Summary
+Completed technical migration of HubSpot bulk upload tool from Gabe’s personal accounts to Revel One shared infrastructure
+Documented comprehensive technical architecture for both bulk upload and Zapier-Airtable sync systems
+Established handoff protocol requiring Keith technical training and end-user testing before Gabe’s departure
+Confirmed Zapier BD sync operational status with identified backfill gap requiring completion
+Introduction
+Dan and Gabe wearing matching navy collared shirts, joking about similar shopping choices
+Gabe resolved internet connectivity issues, no longer needs troubleshooting
+Meeting recorded for documentation purposes during system handoff period
+Detailed Overview of Discussion
+HubSpot Bulk Upload Tool - Complete Technical Architecture
+System Architecture Overview
+Frontend: Streamlit Python library hosted on Render cloud platform
+Backend: Three N8N workflows executing in sequence within shared workspace
+Data Flow: CSV upload → N8N transformation processes → HubSpot API integration
+Authentication: Google OAuth restricted to @revel-one.com domain users
+External Integrations: HubSpot API for contact creation, Rocket Reach API for email enrichment
+N8N Workflow System Configuration
+Location: Revel One N8N workspace → “AI Workflows” project folder
+Workflow Structure: Three sequential workflows passing JSON data objects between processes
+Each workflow adds fields and transformations before passing to next stage
+Final workflow handles HubSpot API submission with deduping logic
+Data Processing: All deduping operations occur in N8N backend, not Render frontend
+Credential Management: Stored at N8N project level for shared team access
+Active credentials: HubSpot API token, Rocket Reach API token
+Credentials transfer with workflows when moving between projects
+Export Capabilities: Complete workflows export as JSON objects for backup/migration
+Downloaded JSON files can rebuild entire workflow in different N8N instances
+Compatible with self-hosted N8N deployments (e.g., Hostinger) for advanced features
+Project Organization:
+Keith’s separate project folder for his workflows
+VCPE experimental project remains in Gabe’s personal account, pending move to “Other Gabe Projects” folder
+Render Deployment Process
+Workspace: Revel One account with Pro plan subscription
+Repository Connection: GitHub Revel1psg repo with collaborative access
+Build Configuration:
+Start command: “streamlit run main.py”
+Root directory: Default settings maintained
+Environment Variables:
+.env file contains Airtable API token for search dropdown population
+Must upload via “Add from .env” option in Render interface
+Secret File Management:
+secrets.toml file contains Google OAuth credentials
+File not stored in GitHub repository for security
+Must manually add via “Add secret file” option
+Post-Deployment Shell Commands (required):
+mkdir .streamlit - Creates Streamlit configuration directory
+mv secrets.toml .streamlit/ - Moves OAuth file to correct location
+Logging: Render logs capture user login activity and data submissions for debugging
+Streamlit Frontend Application
+Core File: main.py as single Python file containing entire application
+API Interactions: Makes ONE read-only API call to Airtable for active search dropdown population
+No write operations to Airtable from frontend
+All data writes handled by N8N backend workflows
+User Interface: Allows data editing and validation before N8N submission
+Data Handoff: Passes validated CSV data to N8N workflow system
+Google OAuth Authentication System
+Platform: Google Cloud Project with OAuth 2.0 configuration
+Access Control: Set to “Make Internal” allowing any @revel-one.com email domain
+Configuration Files:
+secrets.toml contains client ID and client secret credentials
+Must update redirect_uri when deployment URL changes
+Audit Trail: User email captured and passed to HubSpot as “bulk user uploaded” hidden field
+Version 2 Enhancement Idea: Map individual users to separate API keys for true user attribution
+GitHub Repository Management
+Repository: Revel1psg with Dan added as collaborator
+Key Files:
+main.py: Core Streamlit application
+pyproject.toml: Python project dependencies
+uv.lock: Dependency version lock file
+.env: Environment variables (Airtable API)
+secrets.toml: OAuth credentials (excluded from repository)
+Claude Code Integration Capabilities
+N8N Analysis: Can read exported JSON workflows and understand functionality
+Code Generation: Can create specific expressions and workflow logic
+Limitations: Cannot reliably generate complete N8N nodes
+Use Cases: Logic planning and troubleshooting assistance
+Current Deployment Status
+Dual URLs: Both original (Gabe’s) and new (Dan’s) deployments temporarily active
+Migration Plan: Old URL will be deactivated after new deployment verification
+Access Testing: New deployment requires OAuth configuration completion
+Zapier-Airtable BD Sync System
+System Purpose and Architecture
+Function: Automated synchronization of HubSpot BD data to internal Airtable database
+Platform: Zapier automation in shared Revel One account
+Data Source: HubSpot BD view with active search records
+Destination: External Airtable via shared link integration
+Operational Status and Known Issues
+Current State: Fully operational with real-time synchronization
+Fixed Issues: Client rating misreporting resolved (caused by search status changes 0→1 or 1→0)
+Data Limitations: Can append new records but cannot remove existing entries
+Historical Data: Backfill process incomplete, gaps exist in historical record synchronization
+Tag Management and Future Updates
+Forward Compatibility: New HubSpot tags automatically populate in future records
+Historical Limitation: Existing records will not update with new tag definitions
+Migration Requirement: Complete system rebuild necessary when tag structure changes
+Claude Code AI Development Integration
+Current Capabilities Demonstrated
+Workflow Analysis: Successfully read and interpreted exported N8N JSON file
+System Understanding: Provided accurate description of RevelOne recruiting workflow
+Alternative Solutions: Suggested Python custom code, web app, and workflow platform options
+Development Assistance: Offered to build alternative implementations
+People or Organizations Mentioned
+Keith: Developer requiring comprehensive technical training on both systems
+Lou/Liz: Business users needing end-to-end testing on migrated bulk upload tool
+Tokyo: Previously trained on Zapier-Airtable sync, understands current functionality
+Chris/Will: Users who experienced OAuth access issues during previous configuration
+Graham: New company contact coordinating Gabe’s start date and logistics
+Israel: Decision maker for final approval of Gabe’s role timing and location
+Tools or Technologies Mentioned
+N8N: Cloud workflow automation platform with JSON-based node architecture for API integrations
+Render: Cloud hosting service for Python applications with GitHub integration and shell access
+Streamlit: Python web application framework for rapid data interface development
+GitHub: Source code repository with collaborative access and version control
+Google OAuth 2.0: Authentication service with domain-restricted access controls
+HubSpot API: CRM integration platform for contact creation and search management
+Rocket Reach API: Email enrichment service for contact data completion
+Zapier: No-code automation platform connecting SaaS applications
+Airtable: Cloud database platform with API integration capabilities
+Claude Code: AI development assistant with code analysis and generation capabilities
+Hostinger: Alternative N8N hosting option supporting community nodes and advanced code execution
+Key Decisions & Open Items
+Technical Architecture Decisions
+Prioritize immediate technical handoff sessions over ongoing pair programming
+Maintain current N8N cloud deployment rather than self-hosted alternative
+Keep experimental VCPE project in Gabe’s account until proper folder structure created
+Implement audit trail through user email capture rather than individual API key mapping
+System Migration Decisions
+New bulk upload URL will permanently replace original after verification testing
+Both systems will remain in shared Revel One accounts for team continuity
+Historical data backfill completion required before Gabe’s departure
+Outstanding Technical Issues
+Zapier system rebuild will be required when HubSpot tag structure updates
+N8N credential management process needs documentation for future transfers
+Claude Code integration potential requires further evaluation for development workflows
+Next Steps
+Immediate Technical Handoff Requirements (This Week)
+Keith Technical Training Session
+Schedule 30-minute recorded session for today or tomorrow
+Cover complete N8N workflow architecture and troubleshooting
+Demonstrate Render deployment process and shell access
+Review GitHub repository structure and file management
+Document credential management procedures
+End-User System Verification
+Conduct comprehensive testing session with Lou or Liz
+Verify complete data flow: CSV upload → N8N processing → HubSpot integration
+Test Google OAuth authentication with multiple users
+Validate all API integrations and error handling
+Data Completion Tasks
+Complete BD view backfill to eliminate historical gaps
+Verify Zapier sync operational status post-backfill
+Document any data inconsistencies discovered
+Administrative Coordination
+Send start date confirmation email to Graham
+Specify Sunday departure from Paris and Monday Israel availability
+Request guidance on expense procedures for ticket modifications
+
+Recommended Additional Technical Steps
+Create troubleshooting documentation for common N8N and Render issues
+Establish backup procedures for all system credentials and configurations
+Document system monitoring procedures for ongoing operational health
+Plan transition timeline for VCPE experimental project migration
+Schedule follow-up technical review session after initial testing completion
+
+Chat with meeting transcript: https://notes.granola.ai/t/31ca82d2-e4cc-47a3-8395-19781adba2f5-00demib2
+
