@@ -12,3 +12,11 @@ wheels/
 .env
 
 secrets.toml
+
+# n8n workflow exports
+Bulk-*.json
+
+# Data files
+*.csv
+*.xlsx
+interview_notes_extraction_errors.json

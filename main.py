@@ -1,4 +1,5 @@
 # add_to_search_ enter role id
+import json
 import os
 
 import pandas as pd
@@ -28,7 +29,8 @@ st.markdown("*PSG for short*")
 
 if st.session_state.step == 0:
     # Check if user is already authenticated
-    if st.user.is_logged_in:
+    # Use getattr for compatibility across Streamlit versions
+    if getattr(st.user, "is_logged_in", None) or getattr(st.user, "email", None):
         # User is authenticated, move to next step
         st.session_state.step = 1
         st.rerun()
@@ -64,9 +66,21 @@ elif st.session_state.step == 1:
             )
 
             print(rocketInrich.content)
-            st.session_state.table = pd.DataFrame(rocketInrich.json())
-            st.session_state.step += 1
-            st.rerun()
+            try:
+                result = rocketInrich.json()
+                if isinstance(result, list):
+                    st.session_state.table = pd.DataFrame(result)
+                    st.session_state.step += 1
+                    st.rerun()
+                else:
+                    st.error("RocketReach workflow returned an unexpected response. Please try again.")
+                    with st.expander("Error details"):
+                        st.code(json.dumps(result, indent=2), language="json")
+            except Exception as e:
+                st.error(f"Failed to process RocketReach response: {e}")
+                with st.expander("Error details"):
+                    st.text(f"Status code: {rocketInrich.status_code}")
+                    st.code(rocketInrich.text)
 
 #create contacts
 elif st.session_state.step == 2:
@@ -93,9 +107,21 @@ elif st.session_state.step == 2:
         )  ## this is the devolpment url remember to switch to prod
 
         print(hubspotData.content)
-        st.session_state.table = pd.DataFrame(hubspotData.json())
-        st.session_state.step += 1
-        st.rerun()
+        try:
+            result = hubspotData.json()
+            if isinstance(result, list):
+                st.session_state.table = pd.DataFrame(result)
+                st.session_state.step += 1
+                st.rerun()
+            else:
+                st.error("HubSpot workflow returned an unexpected response. Please try again.")
+                with st.expander("Error details"):
+                    st.code(json.dumps(result, indent=2), language="json")
+        except Exception as e:
+            st.error(f"Failed to process HubSpot response: {e}")
+            with st.expander("Error details"):
+                st.text(f"Status code: {hubspotData.status_code}")
+                st.code(hubspotData.text)
 
 elif st.session_state.step == 3:
     st.header("Step 3: Create Candidate trackers")
@@ -151,9 +177,21 @@ elif st.session_state.step == 3:
                 },
                 headers={"Content-Type": "application/json"},
             )
-            st.session_state.table = pd.DataFrame(trackerData.json())
-            st.session_state.step += 1
-            st.rerun()
+            try:
+                result = trackerData.json()
+                if isinstance(result, list):
+                    st.session_state.table = pd.DataFrame(result)
+                    st.session_state.step += 1
+                    st.rerun()
+                else:
+                    st.error("Tracker workflow returned an unexpected response. Please try again.")
+                    with st.expander("Error details"):
+                        st.code(json.dumps(result, indent=2), language="json")
+            except Exception as e:
+                st.error(f"Failed to process tracker response: {e}")
+                with st.expander("Error details"):
+                    st.text(f"Status code: {trackerData.status_code}")
+                    st.code(trackerData.text)
 
 elif st.session_state.step == 4:
     st.success("Trackers Created! ", icon="🎇", width="stretch")
