@@ -15,3 +15,11 @@ secrets.toml
 
 # Ultra AI session data
 .ultra/
+
+# n8n workflow exports
+Bulk-*.json
+
+# Data files
+*.csv
+*.xlsx
+interview_notes_extraction_errors.json
