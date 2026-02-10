@@ -25,7 +25,7 @@ st.set_page_config(page_title="Hubspot Bulk Upload", page_icon="📤", layout="w
 
 # show title
 st.title("(P)ython (S)ourcing utility by (G)abe")
-st.markdown("*PSG for short*")
+st.markdown("*PSG for short* - Keith Updates")
 
 if st.session_state.step == 0:
     # Check if user is already authenticated
