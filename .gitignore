@@ -12,3 +12,6 @@ wheels/
 .env
 
 secrets.toml
+
+# Ultra AI session data
+.ultra/
